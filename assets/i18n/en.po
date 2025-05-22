@@ -196,3 +196,9 @@ msgstr "Error"
 
 msgid "Could not write to the working directory. Please check the permissions."
 msgstr "Could not write to the working directory. Please check the permissions."
+
+msgid "Close details"
+msgstr "Close details"
+
+msgid "Show details"
+msgstr "Show details"

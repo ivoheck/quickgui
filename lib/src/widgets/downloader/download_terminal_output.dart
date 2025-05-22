@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:gettext_i18n/gettext_i18n.dart';
 
 class DownloadTerminalOutput extends StatefulWidget {
   const DownloadTerminalOutput({super.key, required this.outputLines});
@@ -54,41 +55,50 @@ class _DownloadTerminalOutputState extends State<DownloadTerminalOutput> {
   Widget build(BuildContext context) {
     return Column(
       children: [
-        TextButton(
-          onPressed: () {
-            setState(() {
-              isVisible = !isVisible;
+        Padding(
+          padding: const EdgeInsets.all(8.0),
+          child: TextButton(
+            onPressed: () {
+              setState(() {
+                isVisible = !isVisible;
 
-              if (isVisible) {
-                Future.delayed(const Duration(milliseconds: 50), () {
-                  if (mounted && isVisible) {
-                    setState(() => _showCopyButton = true);
-                  }
-                });
-              } else {
-                _showCopyButton = false;
-              }
-            });
-          },
-          style: TextButton.styleFrom(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                if (isVisible) {
+                  Future.delayed(const Duration(milliseconds: 50), () {
+                    if (mounted && isVisible) {
+                      setState(() => _showCopyButton = true);
+                    }
+                  });
+                } else {
+                  _showCopyButton = false;
+                }
+              });
+            },
+            style: TextButton.styleFrom(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+            ),
+            child: isVisible
+                ? Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(context.t('Close details')),
+                      const Padding(
+                        padding: EdgeInsets.all(8.0),
+                        child: Icon(Icons.keyboard_arrow_up),
+                      ),
+                    ],
+                  )
+                : Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Padding(
+                        padding: EdgeInsets.all(8.0),
+                        child: Icon(Icons.info_outline),
+                      ),
+                      Text(context.t('Show details')),
+                    ],
+                  ),
           ),
-          child: isVisible
-              ? const Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text('Show less details'),
-                    Icon(Icons.keyboard_arrow_up),
-                  ],
-                )
-              : const Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(Icons.info_outline),
-                    Text('Show more details'),
-                  ],
-                ),
         ),
         Padding(
           padding: const EdgeInsets.only(left: 12.0, right: 12.0),
