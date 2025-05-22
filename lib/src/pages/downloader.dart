@@ -5,6 +5,7 @@ import 'dart:io';
 import 'package:desktop_notifications/desktop_notifications.dart';
 import 'package:flutter/material.dart';
 import 'package:gettext_i18n/gettext_i18n.dart';
+import 'package:quickgui/src/widgets/downloader/download_terminal_output.dart';
 
 import '../model/operating_system.dart';
 import '../model/option.dart';
@@ -37,6 +38,8 @@ class _DownloaderState extends State<Downloader> {
   var controller = StreamController<double>();
   Process? _process;
 
+  final List<String> _outputLines = [];
+
   @override
   void initState() {
     _progressStream = progressStream();
@@ -54,6 +57,11 @@ class _DownloaderState extends State<Downloader> {
     }
   }
 
+  bool isProgressLine(String line) {
+    return RegExp(r'\d+\s+\d+[kMG]?\s+\d+').hasMatch(line) &&
+        line.contains('%') == false;
+  }
+
   Stream<double> progressStream() {
     var options = [widget.operatingSystem.code, widget.version.version];
     if (widget.option != null) {
@@ -61,21 +69,54 @@ class _DownloaderState extends State<Downloader> {
     }
     Process.start('quickget', options).then((process) {
       if (widget.option!.downloader != 'zsync') {
-        process.stderr.transform(utf8.decoder).forEach(parseCurlProgress);
+        // process.stderr.transform(utf8.decoder).forEach(parseCurlProgress);
+        process.stderr
+            .transform(utf8.decoder)
+            .transform(
+              const LineSplitter(),
+            )
+            .listen((line) {
+          if (isProgressLine(line)) {
+            setState(() {
+              _outputLines.add(
+                line,
+              );
+            });
+          }
+
+          _outputLines.add(
+            line,
+          );
+
+          parseCurlProgress(line);
+        });
+
+        process.stdout
+            .transform(const SystemEncoding().decoder)
+            .transform(
+              const LineSplitter(),
+            )
+            .listen((line) {
+          setState(() {
+            _outputLines.add(
+              line,
+            );
+          });
+        });
       } else {
         controller.add(-1);
       }
 
       process.exitCode.then((value) {
-        bool _cancelled = value.isNegative;
+        bool cancelled = value.isNegative;
         controller.close();
         setState(() {
           _downloadFinished = true;
           notificationsClient?.notify(
-            _cancelled
+            cancelled
                 ? context.t('Download cancelled')
                 : context.t('Download complete'),
-            body: _cancelled
+            body: cancelled
                 ? context.t(
                     'Download of {0} has been canceled.',
                     args: [widget.operatingSystem.name],
@@ -94,6 +135,7 @@ class _DownloaderState extends State<Downloader> {
         _process = process;
       });
     });
+
     return controller.stream;
   }
 
@@ -103,10 +145,7 @@ class _DownloaderState extends State<Downloader> {
       appBar: AppBar(
         title: Text(
           context.t('Downloading {0}', args: [
-            '${widget.operatingSystem.name} ${widget.version.version}' +
-                (widget.option!.option.isNotEmpty
-                    ? ' (${widget.option!.option})'
-                    : '')
+            '${widget.operatingSystem.name} ${widget.version.version}${widget.option!.option.isNotEmpty ? ' (${widget.option!.option})' : ''}'
           ]),
         ),
         automaticallyImplyLeading: false,
@@ -117,10 +156,10 @@ class _DownloaderState extends State<Downloader> {
             child: StreamBuilder(
               stream: _progressStream,
               builder: (context, AsyncSnapshot<double> snapshot) {
-                var data = !snapshot.hasData ||
-                        widget.option!.downloader != 'curl'
-                    ? null
-                    : snapshot.data;
+                var data =
+                    !snapshot.hasData || widget.option!.downloader != 'curl'
+                        ? null
+                        : snapshot.data;
                 return Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
@@ -138,6 +177,7 @@ class _DownloaderState extends State<Downloader> {
                       child: Text(context.t('Target folder : {0}',
                           args: [Directory.current.path])),
                     ),
+                    DownloadTerminalOutput(outputLines: _outputLines),
                   ],
                 );
               },
