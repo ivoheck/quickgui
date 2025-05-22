@@ -84,10 +84,6 @@ class _DownloaderState extends State<Downloader> {
             });
           }
 
-          _outputLines.add(
-            line,
-          );
-
           parseCurlProgress(line);
         });
 

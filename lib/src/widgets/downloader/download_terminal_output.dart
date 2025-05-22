@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 class DownloadTerminalOutput extends StatefulWidget {
   const DownloadTerminalOutput({super.key, required this.outputLines});
@@ -67,7 +68,7 @@ class _DownloadTerminalOutputState extends State<DownloadTerminalOutput> {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Text('Show less details'),
-                    Icon(Icons.arrow_drop_up),
+                    Icon(Icons.keyboard_arrow_up),
                   ],
                 )
               : const Row(
@@ -81,23 +82,51 @@ class _DownloadTerminalOutputState extends State<DownloadTerminalOutput> {
         if (isVisible)
           Padding(
             padding: const EdgeInsets.only(left: 12.0, right: 12.0),
-            child: Container(
-              height: 200,
-              width: double.infinity,
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(8),
-                color: Colors.black,
-              ),
-              child: SingleChildScrollView(
-                controller: _scrollController,
-                child: Padding(
-                  padding: const EdgeInsets.all(8.0),
-                  child: SelectableText(
-                    widget.outputLines.join('\n'),
-                    style: const TextStyle(color: Colors.white),
+            child: Stack(
+              children: [
+                Container(
+                  height: 200,
+                  width: double.infinity,
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(8),
+                    color: Colors.black,
+                  ),
+                  child: SingleChildScrollView(
+                    controller: _scrollController,
+                    child: Padding(
+                      padding: const EdgeInsets.all(8.0),
+                      child: SelectableText(
+                        widget.outputLines.join('\n'),
+                        style: const TextStyle(color: Colors.white),
+                      ),
+                    ),
                   ),
                 ),
-              ),
+                Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: Align(
+                    alignment: Alignment.topRight,
+                    child: IconButton(
+                      onPressed: () {
+                        Clipboard.setData(
+                          ClipboardData(
+                            text: widget.outputLines.join('\n'),
+                          ),
+                        );
+                      },
+                      style: IconButton.styleFrom(
+                        backgroundColor: Colors.grey.shade600,
+                      ),
+                      iconSize: 16.0,
+                      constraints: const BoxConstraints(),
+                      icon: const Icon(
+                        Icons.copy,
+                        color: Colors.black,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
             ),
           ),
       ],
