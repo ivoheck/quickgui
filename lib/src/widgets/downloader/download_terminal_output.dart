@@ -14,6 +14,7 @@ class _DownloadTerminalOutputState extends State<DownloadTerminalOutput> {
   final ScrollController _scrollController = ScrollController();
   bool _shouldAutoScroll = true;
   bool isVisible = false;
+  bool _showCopyButton = false;
 
   @override
   void didUpdateWidget(covariant DownloadTerminalOutput oldWidget) {
@@ -57,6 +58,16 @@ class _DownloadTerminalOutputState extends State<DownloadTerminalOutput> {
           onPressed: () {
             setState(() {
               isVisible = !isVisible;
+
+              if (isVisible) {
+                Future.delayed(const Duration(milliseconds: 50), () {
+                  if (mounted && isVisible) {
+                    setState(() => _showCopyButton = true);
+                  }
+                });
+              } else {
+                _showCopyButton = false;
+              }
             });
           },
           style: TextButton.styleFrom(
@@ -79,56 +90,66 @@ class _DownloadTerminalOutputState extends State<DownloadTerminalOutput> {
                   ],
                 ),
         ),
-        if (isVisible)
-          Padding(
-            padding: const EdgeInsets.only(left: 12.0, right: 12.0),
-            child: Stack(
-              children: [
-                Container(
-                  height: 200,
-                  width: double.infinity,
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(8),
-                    color: Colors.black,
-                  ),
-                  child: SingleChildScrollView(
-                    controller: _scrollController,
-                    child: Padding(
-                      padding: const EdgeInsets.all(8.0),
-                      child: SelectableText(
-                        widget.outputLines.join('\n'),
-                        style: const TextStyle(color: Colors.white),
-                      ),
+        Padding(
+          padding: const EdgeInsets.only(left: 12.0, right: 12.0),
+          child: Stack(
+            children: [
+              AnimatedContainer(
+                duration: const Duration(milliseconds: 150),
+                height: isVisible ? 200 : 0,
+                width: double.infinity,
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(8),
+                  color: Colors.black,
+                ),
+                child: SingleChildScrollView(
+                  controller: _scrollController,
+                  child: Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: SelectableText(
+                      widget.outputLines.join('\n'),
+                      style: const TextStyle(color: Colors.white),
                     ),
                   ),
                 ),
-                Padding(
-                  padding: const EdgeInsets.all(8.0),
-                  child: Align(
-                    alignment: Alignment.topRight,
-                    child: IconButton(
-                      onPressed: () {
-                        Clipboard.setData(
-                          ClipboardData(
-                            text: widget.outputLines.join('\n'),
+              ),
+              AnimatedSwitcher(
+                duration: const Duration(milliseconds: 100),
+                switchInCurve: Curves.easeIn,
+                switchOutCurve: Curves.easeOut,
+                transitionBuilder: (Widget child, Animation<double> animation) {
+                  return FadeTransition(opacity: animation, child: child);
+                },
+                child: _showCopyButton
+                    ? Padding(
+                        padding: const EdgeInsets.all(8.0),
+                        child: Align(
+                          alignment: Alignment.topRight,
+                          child: IconButton(
+                            onPressed: () {
+                              Clipboard.setData(
+                                ClipboardData(
+                                  text: widget.outputLines.join('\n'),
+                                ),
+                              );
+                            },
+                            style: IconButton.styleFrom(
+                              backgroundColor: Colors.grey.shade600,
+                            ),
+                            iconSize: 16.0,
+                            constraints: const BoxConstraints(),
+                            icon: const Icon(
+                              Icons.copy,
+                              color: Colors.black,
+                            ),
                           ),
-                        );
-                      },
-                      style: IconButton.styleFrom(
-                        backgroundColor: Colors.grey.shade600,
-                      ),
-                      iconSize: 16.0,
-                      constraints: const BoxConstraints(),
-                      icon: const Icon(
-                        Icons.copy,
-                        color: Colors.black,
-                      ),
-                    ),
-                  ),
-                ),
-              ],
-            ),
+                        ),
+                      )
+                    : const SizedBox.shrink(),
+              ),
+            ],
           ),
+        ),
       ],
     );
   }
